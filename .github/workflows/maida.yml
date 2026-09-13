@@ -1,0 +1,66 @@
+name: Sales agent gate
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Synthetic behavior to exercise
+        type: choice
+        default: good
+        options:
+          - good
+          - harmless_copy_edit
+          - extra_research
+          - retry_loop
+          - missing_followup
+          - unreviewed_send
+          - tool_error
+          - token_spike
+          - inconclusive
+  schedule:
+    - cron: '41 8 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sales-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Sales agent gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    env:
+      SALES_SCENARIO: ${{ inputs.scenario == 'inconclusive' && 'good' || inputs.scenario }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      # Published Action revision. Update this SHA after reviewing a new version.
+      # One normal trial; the explicit inconclusive scenario uses two.
+      - uses: maida-ai/maida-assert@f7730388f9b37f9903b742c3529c20d24d3ab815
+        env:
+          MAIDA_DATA_DIR: ${{ runner.temp }}/sales-smoke-runs
+        with:
+          agent-script: agent.py
+          baseline: .maida/baselines/sales.json
+          policy: ${{ inputs.scenario == 'inconclusive' && '.maida/inconclusive.yaml' || '.maida/policy.yaml' }}
+          maida-version: v0.5.3
+          post-comment: 'true'
+      - name: Retain the synthetic gate report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sales-gate-report
+          path: |
+            maida-report.json
+            maida-report.md
+            maida-check-payload.json
+          retention-days: 7

@@ -1,0 +1,23 @@
+version: 2.1
+trials: 1
+metrics:
+  stop_condition_reached:
+    kind: invariant
+    require: true
+  required_tools:
+    kind: invariant
+    all_of: [check_consent, qualify_lead, save_draft, create_followup]
+  forbidden_tools:
+    kind: invariant
+    none_of: [send_email]
+  no_loops:
+    kind: invariant
+    require: true
+  tool_call_count:
+    kind: measured
+    direction: upper
+    tolerance: {absolute: 0}
+  cost_tokens:
+    kind: measured
+    direction: upper
+    limit: 128

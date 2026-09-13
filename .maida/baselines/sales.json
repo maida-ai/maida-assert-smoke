@@ -1,0 +1,153 @@
+{
+  "schema_version": "0.3.1",
+  "created_at": "2026-09-13T03:29:03.417Z",
+  "source_run_id": "b0d29b7134ff0d72251a1196e8cf5c84",
+  "source_run_ids": [
+    "b0d29b7134ff0d72251a1196e8cf5c84"
+  ],
+  "source_run_name": "sales-assistant-v1",
+  "summary": {
+    "status": "ok",
+    "total_events": 8.0,
+    "tool_calls": 7.0,
+    "duration_ms": 54.0,
+    "total_tokens": 80.0,
+    "llm_calls": 1.0,
+    "errors": 0.0,
+    "loop_warnings": 0.0
+  },
+  "tool_path": [
+    "calculate_quote",
+    "check_consent",
+    "create_followup",
+    "list_plans",
+    "lookup_contact",
+    "qualify_lead",
+    "save_draft"
+  ],
+  "tool_call_sequence": [
+    "lookup_contact",
+    "check_consent",
+    "qualify_lead",
+    "list_plans",
+    "calculate_quote",
+    "save_draft",
+    "create_followup"
+  ],
+  "tool_call_counts": {
+    "lookup_contact": 1,
+    "check_consent": 1,
+    "qualify_lead": 1,
+    "list_plans": 1,
+    "calculate_quote": 1,
+    "save_draft": 1,
+    "create_followup": 1
+  },
+  "llm_models_used": [
+    "simulated-drafter-v1"
+  ],
+  "event_type_sequence": [
+    "RUN_START",
+    "TOOL_CALL",
+    "TOOL_CALL",
+    "TOOL_CALL",
+    "TOOL_CALL",
+    "TOOL_CALL",
+    "LLM_CALL",
+    "TOOL_CALL",
+    "TOOL_CALL",
+    "RUN_END"
+  ],
+  "final_status": "ok",
+  "trial_sample": {
+    "trials": 1,
+    "environment_fingerprint": {
+      "algorithm": "sha256",
+      "workspace": "1e799631d52aa7263c2e66380e64d3e794e7e547994c36ced6ceb4b7a922a24a",
+      "python": "3.12.3",
+      "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+      "maida": "0.5.3"
+    },
+    "metrics": {
+      "step_count": [
+        8.0
+      ],
+      "tool_call_count": [
+        7.0
+      ],
+      "cost_tokens": [
+        80.0
+      ],
+      "latency_ms": [
+        54.0
+      ],
+      "llm_call_count": [
+        1.0
+      ],
+      "error_count": [
+        0.0
+      ],
+      "loop_warning_count": [
+        0.0
+      ]
+    },
+    "invariants": {
+      "stop_condition_reached": [
+        true
+      ]
+    },
+    "signature_ids": [
+      "13e52d063d74b413dbb3e33502e903bad4ab6bd000c7a369945e6686cde65d88"
+    ],
+    "signature_counts": {
+      "13e52d063d74b413dbb3e33502e903bad4ab6bd000c7a369945e6686cde65d88": 1
+    },
+    "signatures": {
+      "13e52d063d74b413dbb3e33502e903bad4ab6bd000c7a369945e6686cde65d88": {
+        "tool_path": [
+          "calculate_quote",
+          "check_consent",
+          "create_followup",
+          "list_plans",
+          "lookup_contact",
+          "qualify_lead",
+          "save_draft"
+        ],
+        "tool_call_sequence": [
+          "lookup_contact",
+          "check_consent",
+          "qualify_lead",
+          "list_plans",
+          "calculate_quote",
+          "save_draft",
+          "create_followup"
+        ],
+        "tool_call_counts": {
+          "lookup_contact": 1,
+          "check_consent": 1,
+          "qualify_lead": 1,
+          "list_plans": 1,
+          "calculate_quote": 1,
+          "save_draft": 1,
+          "create_followup": 1
+        },
+        "llm_models_used": [
+          "simulated-drafter-v1"
+        ],
+        "event_type_sequence": [
+          "RUN_START",
+          "TOOL_CALL",
+          "TOOL_CALL",
+          "TOOL_CALL",
+          "TOOL_CALL",
+          "TOOL_CALL",
+          "LLM_CALL",
+          "TOOL_CALL",
+          "TOOL_CALL",
+          "RUN_END"
+        ],
+        "final_status": "ok"
+      }
+    }
+  }
+}

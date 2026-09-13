@@ -1,0 +1,10 @@
+# Small, deliberately inconclusive sample to exercise the consumer's third verdict.
+version: 2.1
+trials: 2
+metrics:
+  tool_call_count:
+    kind: distributional
+    direction: upper
+    coverage: 0.5
+    confidence: 0.95
+    mode: gating

@@ -1,0 +1,11 @@
+# Capture one known-good structural sample before a baseline exists.
+version: 2.1
+trials: 1
+metrics:
+  stop_condition_reached:
+    kind: invariant
+    require: true
+  tool_call_count:
+    kind: measured
+    direction: upper
+    limit: 7

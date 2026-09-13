@@ -1,0 +1,9 @@
+{
+  "id": "lead-001",
+  "company": "Example Workshop",
+  "email": "buyer@example.invalid",
+  "consent": true,
+  "seats": 5,
+  "monthly_budget_usd": 200,
+  "need": "shared inbox"
+}
