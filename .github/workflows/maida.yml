@@ -1,12 +1,11 @@
-name: Sales agent gate
+name: Maida consumer checks
 
 on:
   pull_request:
-    branches: [main]
   workflow_dispatch:
     inputs:
       scenario:
-        description: Synthetic behavior to exercise
+        description: Synthetic behavior to exercise against upstream main
         type: choice
         default: good
         options:
@@ -26,34 +25,36 @@ permissions:
   contents: read
 
 concurrency:
-  group: sales-gate-${{ github.event.pull_request.number || github.ref }}
+  group: maida-consumer-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   gate:
     name: Sales agent gate
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
       checks: write
       pull-requests: write
-    env:
-      SALES_SCENARIO: ${{ inputs.scenario == 'inconclusive' && 'good' || inputs.scenario }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
           persist-credentials: false
-      # Published Action revision. Update this SHA after reviewing a new version.
-      # One normal trial; the explicit inconclusive scenario uses two.
-      - uses: maida-ai/maida-assert@f7730388f9b37f9903b742c3529c20d24d3ab815
+      # Reviewed Action code; blocking policy and baseline come from the PR base.
+      - uses: maida-ai/maida-assert@92980030c9a8d30106db11804826b7fd61b740c8
         env:
-          MAIDA_DATA_DIR: ${{ runner.temp }}/sales-smoke-runs
+          MAIDA_DATA_DIR: ${{ runner.temp }}/sales-gate-runs
         with:
           agent-script: agent.py
           baseline: .maida/baselines/sales.json
-          policy: ${{ inputs.scenario == 'inconclusive' && '.maida/inconclusive.yaml' || '.maida/policy.yaml' }}
+          policy: .maida/policy.yaml
           maida-version: v0.5.3
+          mode: blocking
+          configuration-acceptance: ${{ vars.MAIDA_CONFIGURATION_ACCEPTANCE }}
           post-comment: 'true'
       - name: Retain the synthetic gate report
         if: always()
@@ -64,4 +65,103 @@ jobs:
             maida-report.json
             maida-report.md
             maida-check-payload.json
+          retention-days: 7
+
+  upstream-revision:
+    name: Select upstream Action revision
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.revision.outputs.sha }}
+      scenarios: ${{ steps.revision.outputs.scenarios }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Resolve main once for all scenarios
+        id: revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SCENARIO: ${{ inputs.scenario }}
+        run: |
+          sha=$(gh api repos/maida-ai/maida-assert/commits/main --jq .sha)
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]]
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Testing maida-ai/maida-assert@$sha" >> "$GITHUB_STEP_SUMMARY"
+          python - <<'PY'
+          import json
+          import os
+          from scripts.smoke import EXPECTED
+
+          scenario = os.environ['SCENARIO']
+          if scenario and scenario not in EXPECTED:
+              raise SystemExit('Unknown smoke scenario')
+          scenarios = [scenario] if scenario else ['good', 'extra_research', 'retry_loop', 'inconclusive']
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'scenarios={json.dumps(scenarios)}\n')
+          PY
+
+  upstream-smoke:
+    name: Upstream Action (${{ matrix.scenario }})
+    needs: upstream-revision
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: write
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: ${{ fromJSON(needs.upstream-revision.outputs.scenarios) }}
+    env:
+      SALES_SCENARIO: ${{ matrix.scenario == 'inconclusive' && 'good' || matrix.scenario }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      # Runtime dependency checkout, never vendored. Every case uses the same SHA.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: maida-ai/maida-assert
+          ref: ${{ needs.upstream-revision.outputs.sha }}
+          path: .upstream-action
+          persist-credentials: false
+      - name: Record tested revision and pre-existing checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git -C .upstream-action rev-parse HEAD > upstream-action-sha.txt
+          gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?filter=all" --paginate --slurp > checks-before.json
+      # Non-PR events cannot exercise blocking mode's trusted-base boundary.
+      - uses: ./.upstream-action
+        env:
+          MAIDA_DATA_DIR: ${{ runner.temp }}/upstream-smoke-runs
+        with:
+          agent-script: agent.py
+          baseline: .maida/baselines/sales.json
+          policy: ${{ matrix.scenario == 'inconclusive' && '.maida/inconclusive.yaml' || '.maida/policy.yaml' }}
+          maida-version: v0.5.3
+          mode: report-only
+          post-comment: 'false'
+      - name: Verify expected verdict and fresh check publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SCENARIO: ${{ matrix.scenario }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?filter=all" --paginate --slurp > checks-after.json
+          python -m scripts.verify_action_result "$SCENARIO" --head-sha "$GITHUB_SHA" --run-url "$RUN_URL"
+      - name: Retain upstream smoke evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: upstream-smoke-${{ matrix.scenario }}
+          path: |
+            upstream-action-sha.txt
+            maida-report.json
+            maida-report.md
+            maida-check-payload.json
+            checks-before.json
+            checks-after.json
           retention-days: 7
