@@ -119,7 +119,7 @@ stay green and the sales gate should fail with a PR comment. Changing back to
 `good` should update that same comment and pass. Set required checks explicitly
 in repository settings; the YAML does not configure branch protection.
 
-The pinned Action currently maps INCONCLUSIVE to neutral, which does not block
+The legacy `maida.yml` Action pin maps INCONCLUSIVE to neutral, which does not block
 merging by itself. No merge-boundary enforcement is claimed. Its handling of
 candidate policy/baseline changes, live authorization, acceptance write-back and
 dispatch reruns still needs the Action's separate end-to-end verification.
@@ -144,3 +144,14 @@ invalid input, consent and qualification exits, tool failure, real CLI verdicts,
 and reviewed acceptance in a temporary copy. A network guard rejects socket
 connections in the in-process agent tests. Do not add real contact data, provider
 keys or delivery integrations to this fixture.
+
+## Prepared trusted-policy gate
+
+`issue47.yml` targets `issue-47-live-base-20260919` and directly uses the
+merged `maida-ai/maida-assert` implementation pinned to a full commit SHA.
+The Action resolves policy from the PR base; no Action source is copied here.
+The legacy gate now targets main; fixture verification still runs on every PR.
+Branches `issue-47-live-inconclusive-20260919` and `issue-47-live-report-only-20260919`
+select the corresponding test modes; other branches use the normal blocking policy.
+Review `ISSUE47_CONFIGURATION_ACCEPTANCE`, CODEOWNERS, and required-check settings
+before live use. This local fixture does not configure protection or prove merging.

@@ -1,0 +1,34 @@
+name: Issue 47 live merge boundary
+on:
+  pull_request:
+    branches: [issue-47-live-base-20260919]
+permissions:
+  contents: read
+concurrency:
+  group: issue47-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  gate:
+    name: Issue 47 merge gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      # Reviewed upstream implementation; candidate PRs do not supply Action code.
+      - uses: maida-ai/maida-assert@92980030c9a8d30106db11804826b7fd61b740c8
+        env:
+          MAIDA_DATA_DIR: ${{ runner.temp }}/issue47-runs
+        with:
+          agent-script: agent.py
+          baseline: .maida/baselines/sales.json
+          policy: ${{ github.head_ref == 'issue-47-live-inconclusive-20260919' && '.maida/inconclusive.yaml' || '.maida/policy.yaml' }}
+          mode: ${{ github.head_ref == 'issue-47-live-report-only-20260919' && 'report-only' || 'blocking' }}
+          configuration-acceptance: ${{ vars.ISSUE47_CONFIGURATION_ACCEPTANCE }}
+          post-comment: 'false'

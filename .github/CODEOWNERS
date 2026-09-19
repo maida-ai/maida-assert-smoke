@@ -1,0 +1,7 @@
+# Gate control changes require review in this disposable test base.
+/.github/workflows/ @z-a-f
+/.github/CODEOWNERS @z-a-f
+/agent.py @z-a-f
+/sales_agent/ @z-a-f
+/pyproject.toml @z-a-f
+/uv.lock @z-a-f
