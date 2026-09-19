@@ -1,15 +1,15 @@
-name: Issue 47 live merge boundary
+name: Behavioral merge boundary
 on:
   pull_request:
-    branches: [issue-47-live-base-20260919]
+    branches: [merge-boundary-base]
 permissions:
   contents: read
 concurrency:
-  group: issue47-${{ github.event.pull_request.number }}
+  group: merge-boundary-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 jobs:
   gate:
-    name: Issue 47 merge gate
+    name: Behavioral merge gate
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -24,11 +24,11 @@ jobs:
       # Reviewed upstream implementation; candidate PRs do not supply Action code.
       - uses: maida-ai/maida-assert@92980030c9a8d30106db11804826b7fd61b740c8
         env:
-          MAIDA_DATA_DIR: ${{ runner.temp }}/issue47-runs
+          MAIDA_DATA_DIR: ${{ runner.temp }}/merge-boundary-runs
         with:
           agent-script: agent.py
           baseline: .maida/baselines/sales.json
-          policy: ${{ github.head_ref == 'issue-47-live-inconclusive-20260919' && '.maida/inconclusive.yaml' || '.maida/policy.yaml' }}
-          mode: ${{ github.head_ref == 'issue-47-live-report-only-20260919' && 'report-only' || 'blocking' }}
-          configuration-acceptance: ${{ vars.ISSUE47_CONFIGURATION_ACCEPTANCE }}
+          policy: ${{ github.head_ref == 'merge-boundary-inconclusive' && '.maida/inconclusive.yaml' || '.maida/policy.yaml' }}
+          mode: ${{ github.head_ref == 'merge-boundary-report-only' && 'report-only' || 'blocking' }}
+          configuration-acceptance: ${{ vars.MAIDA_CONFIGURATION_ACCEPTANCE }}
           post-comment: 'false'

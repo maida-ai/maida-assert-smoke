@@ -145,13 +145,14 @@ and reviewed acceptance in a temporary copy. A network guard rejects socket
 connections in the in-process agent tests. Do not add real contact data, provider
 keys or delivery integrations to this fixture.
 
-## Prepared trusted-policy gate
+## Behavioral merge-boundary test
 
-`issue47.yml` targets `issue-47-live-base-20260919` and directly uses the
+`merge-boundary.yml` targets `merge-boundary-base` and directly uses the
 merged `maida-ai/maida-assert` implementation pinned to a full commit SHA.
 The Action resolves policy from the PR base; no Action source is copied here.
 The legacy gate now targets main; fixture verification still runs on every PR.
-Branches `issue-47-live-inconclusive-20260919` and `issue-47-live-report-only-20260919`
+Branches `merge-boundary-inconclusive` and `merge-boundary-report-only`
 select the corresponding test modes; other branches use the normal blocking policy.
-Review `ISSUE47_CONFIGURATION_ACCEPTANCE`, CODEOWNERS, and required-check settings
-before live use. This local fixture does not configure protection or prove merging.
+For live testing, require both `Behavioral merge gate` and `Maida statistical gate`.
+Review `MAIDA_CONFIGURATION_ACCEPTANCE` ownership and CODEOWNERS before live use.
+This local fixture does not configure protection or prove merging.
