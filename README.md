@@ -106,30 +106,66 @@ missing required tool acceptable under unchanged policy.
 
 ## GitHub smoke workflow
 
-`verify.yml` runs tests, coverage and lint on every PR. `maida.yml` invokes the
-published, SHA-pinned Action on PRs, manual dispatch and a weekly schedule. On a
-PR it reads `scenario.json`; manually, choose a scenario in the workflow UI.
-The normal run uses one trial, the inconclusive case two. Jobs time out after
-five minutes, request no model credentials and retain only synthetic test
-reports for seven days. GitHub runner minutes may still be billable.
+`verify.yml` runs tests, coverage and lint on every PR. `maida.yml` has two
+purposes:
 
-After creating a GitHub remote and publishing this fixture, open a test PR
-changing `scenario.json` from `good` to `retry_loop`. The fixture tests should
-stay green and the sales gate should fail with a PR comment. Changing back to
-`good` should update that same comment and pass. Set required checks explicitly
-in repository settings; the YAML does not configure branch protection.
+- **Consumer PR gate:** every PR, regardless of target branch, runs the reviewed,
+  SHA-pinned Action in blocking mode against the exact candidate commit. The
+  Action reads policy and baseline from the PR base. PASS succeeds; FAIL and
+  INCONCLUSIVE fail the gate. Missing evidence or failed check publication also
+  fails the job. The candidate's `scenario.json` selects the agent behavior.
+- **Upstream Action regression smoke:** every Monday at 08:41 UTC, test current
+  `maida-ai/maida-assert` main with `good`, `extra_research`, `retry_loop` and
+  `inconclusive`. Manual dispatch tests any scenario listed above. Resolve main
+  once, check out that exact SHA as a runtime dependency, and record it in the run summary and
+  artifacts. No Action source is vendored in this repository.
 
-The pinned Action currently maps INCONCLUSIVE to neutral, which does not block
-merging by itself. No merge-boundary enforcement is claimed. Its handling of
-candidate policy/baseline changes, live authorization, acceptance write-back and
-dispatch reruns still needs the Action's separate end-to-end verification.
-Protect `.github/workflows/` through required review/CODEOWNERS before testing
-workflow-file tampering. This fixture currently provides local acceptance and
-PR/manual/scheduled gate runs; an issue-comment acceptance workflow is not enabled.
+Scheduled/manual tests use report-only mode because blocking mode requires a
+real PR and trusted base revision. Their verifier requires the expected verdict,
+a nonempty Markdown report, and a newly published neutral check on the consumer
+commit with matching title and summary. An unexpected verdict, missing check or
+stale check fails the smoke job even if the Action step succeeded. This tests
+Action installation, CLI invocation, report handling and GitHub check publication;
+it does not test PR comments, trusted-base enforcement or protected merges.
+The released CLI stays pinned to keep these tests focused on Action changes.
 
-The Action under review can be tested after its commit is available on GitHub:
-replace the pinned `maida-ai/maida-assert` SHA in `maida.yml` with that reviewed
-commit. No sibling checkout or private repository is needed to run this fixture.
+Known incompatibility in the current PR Action pin: invariant-failure reports
+(such as `retry_loop`, `missing_followup` and `unreviewed_send`) contain a decisive
+FAIL but also `abort_reason=invariant_violation`. The Action currently rejects
+these as aborted evidence before publishing a check or comment. The manual
+`tool_error` scenario similarly stops before publication with
+`abort_reason=agent_process_failure`. Local execution of the Action's shell steps
+against this fixture reproduced these failures; GitHub transport was simulated.
+The scheduled `retry_loop` case deliberately preserves the expected FAIL report
+and publication requirement, so it will expose the upstream incompatibility
+until the Action handles it. `extra_research` covers measured FAIL independently.
+Do not weaken the fixture policy or accept a missing report to make CI green.
+
+The schedule becomes active when this workflow is on the default branch. Changes
+to the Action repository are picked up on the next scheduled run, not immediately.
+Use manual dispatch for an earlier check. Upstream tests request only contents
+read and checks write; PR jobs additionally request pull-requests write for the
+comment. Fork tokens may lack write permissions, in which case the blocking job
+fails closed. No privileged PR trigger is used.
+
+To exercise the PR gate, open a test PR changing `scenario.json` from `good` to
+`extra_research`. Fixture tests should stay green and `Sales agent gate` should
+fail with a PR comment. Changing back to `good` should update the comment and pass.
+Intentional policy/baseline changes require a maintainer-controlled
+`MAIDA_CONFIGURATION_ACCEPTANCE` value bound to the base, head and configuration;
+see the [Action documentation](https://github.com/maida-ai/maida-assert#readme).
+Never source that variable from candidate content.
+
+Repository settings must require both `Sales agent gate` and `Maida statistical
+gate` and require review of workflow/control changes using CODEOWNERS. YAML alone
+does not configure protection. Protected merge behavior remains unverified; this
+fixture's scheduled checks do not establish merge enforcement. An issue-comment
+acceptance workflow is not enabled.
+
+Jobs time out after five minutes, request no model credentials and retain only
+synthetic reports and check metadata for seven days. GitHub runner minutes may
+still be billable. Update the PR Action pin after reviewing a new upstream
+revision; scheduled testing does not automatically promote it.
 
 ## Development
 
@@ -141,6 +177,7 @@ uv run ruff format --check .
 
 Tests cover the successful path, harmless variance, deliberate regressions,
 invalid input, consent and qualification exits, tool failure, real CLI verdicts,
-and reviewed acceptance in a temporary copy. A network guard rejects socket
+reviewed acceptance in a temporary copy, and rejection of missing, stale or
+incorrect Action check evidence. A network guard rejects socket
 connections in the in-process agent tests. Do not add real contact data, provider
 keys or delivery integrations to this fixture.
