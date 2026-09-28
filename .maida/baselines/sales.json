@@ -1,24 +1,25 @@
 {
   "schema_version": "0.3.1",
-  "created_at": "2026-09-13T03:29:03.417Z",
-  "source_run_id": "b0d29b7134ff0d72251a1196e8cf5c84",
+  "created_at": "2026-09-28T17:39:06.752Z",
+  "source_run_id": "bb45e7fc3e05b375bd5bd4f9b4e35495",
   "source_run_ids": [
-    "b0d29b7134ff0d72251a1196e8cf5c84"
+    "bb45e7fc3e05b375bd5bd4f9b4e35495"
   ],
   "source_run_name": "sales-assistant-v1",
   "summary": {
     "status": "ok",
-    "total_events": 8.0,
-    "tool_calls": 7.0,
-    "duration_ms": 54.0,
-    "total_tokens": 80.0,
-    "llm_calls": 1.0,
-    "errors": 0.0,
-    "loop_warnings": 0.0
+    "total_events": 9,
+    "llm_calls": 1,
+    "tool_calls": 8,
+    "errors": 0,
+    "loop_warnings": 0,
+    "duration_ms": 62,
+    "total_tokens": 80
   },
   "tool_path": [
     "calculate_quote",
     "check_consent",
+    "compare_plans",
     "create_followup",
     "list_plans",
     "lookup_contact",
@@ -30,6 +31,7 @@
     "check_consent",
     "qualify_lead",
     "list_plans",
+    "compare_plans",
     "calculate_quote",
     "save_draft",
     "create_followup"
@@ -39,6 +41,7 @@
     "check_consent": 1,
     "qualify_lead": 1,
     "list_plans": 1,
+    "compare_plans": 1,
     "calculate_quote": 1,
     "save_draft": 1,
     "create_followup": 1
@@ -53,6 +56,7 @@
     "TOOL_CALL",
     "TOOL_CALL",
     "TOOL_CALL",
+    "TOOL_CALL",
     "LLM_CALL",
     "TOOL_CALL",
     "TOOL_CALL",
@@ -61,25 +65,19 @@
   "final_status": "ok",
   "trial_sample": {
     "trials": 1,
-    "environment_fingerprint": {
-      "algorithm": "sha256",
-      "workspace": "1e799631d52aa7263c2e66380e64d3e794e7e547994c36ced6ceb4b7a922a24a",
-      "python": "3.12.3",
-      "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
-      "maida": "0.5.3"
-    },
+    "environment_fingerprint": null,
     "metrics": {
       "step_count": [
-        8.0
+        9.0
       ],
       "tool_call_count": [
-        7.0
+        8.0
       ],
       "cost_tokens": [
         80.0
       ],
       "latency_ms": [
-        54.0
+        62.0
       ],
       "llm_call_count": [
         1.0
@@ -91,22 +89,19 @@
         0.0
       ]
     },
-    "invariants": {
-      "stop_condition_reached": [
-        true
-      ]
-    },
+    "invariants": {},
     "signature_ids": [
-      "13e52d063d74b413dbb3e33502e903bad4ab6bd000c7a369945e6686cde65d88"
+      "cc793a6fd1f6bf202aadb5460b08f1b4760f44b33ac32deb3cabcbd29a2386e1"
     ],
     "signature_counts": {
-      "13e52d063d74b413dbb3e33502e903bad4ab6bd000c7a369945e6686cde65d88": 1
+      "cc793a6fd1f6bf202aadb5460b08f1b4760f44b33ac32deb3cabcbd29a2386e1": 1
     },
     "signatures": {
-      "13e52d063d74b413dbb3e33502e903bad4ab6bd000c7a369945e6686cde65d88": {
+      "cc793a6fd1f6bf202aadb5460b08f1b4760f44b33ac32deb3cabcbd29a2386e1": {
         "tool_path": [
           "calculate_quote",
           "check_consent",
+          "compare_plans",
           "create_followup",
           "list_plans",
           "lookup_contact",
@@ -118,6 +113,7 @@
           "check_consent",
           "qualify_lead",
           "list_plans",
+          "compare_plans",
           "calculate_quote",
           "save_draft",
           "create_followup"
@@ -127,6 +123,7 @@
           "check_consent": 1,
           "qualify_lead": 1,
           "list_plans": 1,
+          "compare_plans": 1,
           "calculate_quote": 1,
           "save_draft": 1,
           "create_followup": 1
@@ -141,6 +138,7 @@
           "TOOL_CALL",
           "TOOL_CALL",
           "TOOL_CALL",
+          "TOOL_CALL",
           "LLM_CALL",
           "TOOL_CALL",
           "TOOL_CALL",
@@ -148,6 +146,39 @@
         ],
         "final_status": "ok"
       }
+    }
+  },
+  "guardrail_events": [],
+  "acceptance": {
+    "accepted_at": "2026-09-28T17:39:21.193210+00:00",
+    "accepted_by": "z-a-f",
+    "reason": "Reviewed the synthetic compare_plans lookup: one intentional comparison step, unchanged consent checks, drafting-only behavior, and no external delivery.",
+    "source_run_id": "bb45e7fc3e05b375bd5bd4f9b4e35495",
+    "source": {
+      "repository": "maida-ai/maida-assert-smoke",
+      "pull_request": {
+        "number": 5
+      },
+      "commit_sha": "51018c2a1cb55e4fdf65ec941e48336f688ebd0c"
+    },
+    "previous_baseline": {
+      "path": ".maida/baselines/sales.json",
+      "sha256": "b4befa3377f56d7ee375f348b734ad287b3cc3a2cd96bf879955a82f46dd9988"
+    },
+    "policy": {
+      "path": ".maida/policy.yaml",
+      "sha256": "6b68fb0d30e80652c9f220d319584d9ce843463cbc60b60a09bc51ecfa95bc23",
+      "base_sha": "69b2deeed78448161b63168aac56de3ef2f5fb09"
+    },
+    "capture": {
+      "run_id": "36459590453",
+      "run_attempt": "1",
+      "comment_id": 5875320307,
+      "artifact_sha256": "50dc6f2bcaca590589fb83b88a7a0a00e08d0cec7d7fb3f0f3db3b90f6231789"
+    },
+    "verdict": {
+      "outcome": "accepted",
+      "summary": "Intentional baseline update; fresh gate results required."
     }
   }
 }
