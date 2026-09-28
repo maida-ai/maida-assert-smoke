@@ -1,23 +1,10 @@
+# Small, deliberately inconclusive sample to exercise the consumer's third verdict.
 version: 2.1
-trials: 1
+trials: 2
 metrics:
-  stop_condition_reached:
-    kind: invariant
-    require: true
-  required_tools:
-    kind: invariant
-    all_of: [check_consent, qualify_lead, save_draft, create_followup]
-  forbidden_tools:
-    kind: invariant
-    none_of: [send_email]
-  no_loops:
-    kind: invariant
-    require: true
   tool_call_count:
-    kind: measured
+    kind: distributional
     direction: upper
-    tolerance: {absolute: 0}
-  cost_tokens:
-    kind: measured
-    direction: upper
-    limit: 128
+    coverage: 0.5
+    confidence: 0.95
+    mode: gating
