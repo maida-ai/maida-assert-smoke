@@ -6,3 +6,4 @@
 /pyproject.toml @z-a-f
 /uv.lock @z-a-f
 /scripts/ @z-a-f
+/.maida/ @z-a-f

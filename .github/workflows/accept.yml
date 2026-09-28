@@ -1,0 +1,73 @@
+name: Accept Maida Baseline
+on:
+  issue_comment:
+    types: [created]
+permissions: {}
+concurrency:
+  group: maida-accept-${{ github.event.issue.number }}
+  cancel-in-progress: false
+jobs:
+  authorize:
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/maida accept')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      authorized: ${{ steps.command.outputs.authorized }}
+      context: ${{ steps.command.outputs.context }}
+      head-sha: ${{ steps.command.outputs.head-sha }}
+    steps:
+      - id: command
+        uses: maida-ai/maida-assert/accept-command@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
+        with:
+          stage: authorize
+          baseline: .maida/baselines/sales.json
+          policy: .maida/policy.yaml
+          github-token: ${{ github.token }}
+
+  capture:
+    needs: authorize
+    if: needs.authorize.outputs.authorized == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.authorize.outputs.head-sha }}
+          persist-credentials: false
+      - uses: maida-ai/maida-assert/capture-acceptance@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
+        with:
+          context: ${{ needs.authorize.outputs.context }}
+          agent-script: agent.py
+          artifact-directory: ${{ runner.temp }}/maida-acceptance
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: maida-accept-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/maida-acceptance/acceptance.json
+          if-no-files-found: error
+          retention-days: 1
+
+  write:
+    needs: [authorize, capture]
+    if: always() && needs.authorize.outputs.authorized == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        if: needs.capture.result == 'success'
+        with:
+          name: maida-accept-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/maida-acceptance
+      - uses: maida-ai/maida-assert/write-back@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
+        if: always()
+        with:
+          context: ${{ needs.authorize.outputs.context }}
+          artifact-directory: ${{ runner.temp }}/maida-acceptance
+          github-token: ${{ github.token }}
