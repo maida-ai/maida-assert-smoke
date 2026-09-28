@@ -2,6 +2,8 @@ name: Maida consumer checks
 
 on:
   pull_request:
+  repository_dispatch:
+    types: [maida_baseline_updated]
   workflow_dispatch:
     inputs:
       scenario:
@@ -25,27 +27,31 @@ permissions:
   contents: read
 
 concurrency:
-  group: maida-consumer-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  group: maida-consumer-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.client_payload.pr_number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   gate:
     name: Sales agent gate
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'repository_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
       checks: write
       pull-requests: write
+      statuses: write
     steps:
+      - id: pr
+        uses: maida-ai/maida-assert/pr-context@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ steps.pr.outputs.head-sha }}
           fetch-depth: 0
           persist-credentials: false
       # Reviewed Action code; blocking policy and baseline come from the PR base.
-      - uses: maida-ai/maida-assert@92980030c9a8d30106db11804826b7fd61b740c8
+      - id: gate
+        uses: maida-ai/maida-assert@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
         env:
           MAIDA_DATA_DIR: ${{ runner.temp }}/sales-gate-runs
         with:
@@ -56,6 +62,15 @@ jobs:
           mode: blocking
           configuration-acceptance: ${{ vars.MAIDA_CONFIGURATION_ACCEPTANCE }}
           post-comment: 'true'
+          accept-command-enabled: 'true'
+      - if: always() && steps.pr.outcome == 'success'
+        uses: maida-ai/maida-assert/publish-status@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
+        with:
+          head-sha: ${{ steps.pr.outputs.head-sha }}
+          base-sha: ${{ steps.pr.outputs.base-sha }}
+          verdict: ${{ steps.gate.outputs.verdict }}
+          conclusion: ${{ steps.gate.outputs.conclusion }}
+          publication: ${{ steps.gate.outputs.publication }}
       - name: Retain the synthetic gate report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

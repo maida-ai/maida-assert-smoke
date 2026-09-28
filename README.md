@@ -129,18 +129,6 @@ Action installation, CLI invocation, report handling and GitHub check publicatio
 it does not test PR comments, trusted-base enforcement or protected merges.
 The released CLI stays pinned to keep these tests focused on Action changes.
 
-Known incompatibility in the current PR Action pin: invariant-failure reports
-(such as `retry_loop`, `missing_followup` and `unreviewed_send`) contain a decisive
-FAIL but also `abort_reason=invariant_violation`. The Action currently rejects
-these as aborted evidence before publishing a check or comment. The manual
-`tool_error` scenario similarly stops before publication with
-`abort_reason=agent_process_failure`. Local execution of the Action's shell steps
-against this fixture reproduced these failures; GitHub transport was simulated.
-The scheduled `retry_loop` case deliberately preserves the expected FAIL report
-and publication requirement, so it will expose the upstream incompatibility
-until the Action handles it. `extra_research` covers measured FAIL independently.
-Do not weaken the fixture policy or accept a missing report to make CI green.
-
 The schedule becomes active when this workflow is on the default branch. Changes
 to the Action repository are picked up on the next scheduled run, not immediately.
 Use manual dispatch for an earlier check. Upstream tests request only contents
@@ -156,11 +144,11 @@ Intentional policy/baseline changes require a maintainer-controlled
 see the [Action documentation](https://github.com/maida-ai/maida-assert#readme).
 Never source that variable from candidate content.
 
-Repository settings must require both `Sales agent gate` and `Maida statistical
-gate` and require review of workflow/control changes using CODEOWNERS. YAML alone
-does not configure protection. Protected merge behavior remains unverified; this
-fixture's scheduled checks do not establish merge enforcement. An issue-comment
-acceptance workflow is not enabled.
+Repository settings must require both `Maida / agent-check` and `Maida statistical gate`, strict up-to-date checks, fresh reviews, and CODEOWNERS review of workflow/control changes. YAML alone does not configure protection. The explicit commit status binds ordinary PR and dispatch evaluations to the verified current PR head. Scheduled checks do not establish merge enforcement.
+
+The default-branch `accept.yml` workflow handles `/maida accept <reason>` through separate authorization, read-only capture and trusted write jobs. It creates a baseline-only bot commit and requests a fresh `repository_dispatch` gate. The gate initially blocks the changed configuration until a maintainer reviews the baseline and sets `MAIDA_CONFIGURATION_ACCEPTANCE` to the exact base/head/digest reported in the run. Rerun that dispatch after setting the variable. A later commit invalidates acceptance; clear the stale variable before evaluating a different PR. No personal access token or repository secret is needed.
+
+For a live exercise, change `scenario.json` from `good` to `extra_research`, confirm the measured FAIL, review the comparison step and request acceptance. Record the acceptance run, baseline commit and dispatch run, then use the upstream [post-accept verifier](https://github.com/maida-ai/maida-assert/blob/main/docs/acceptance.md#verify-the-actual-post-accept-loop). Record actual merge refusal separately from configured protection and successful check publication.
 
 Jobs time out after five minutes, request no model credentials and retain only
 synthetic reports and check metadata for seven days. GitHub runner minutes may
