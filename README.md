@@ -1,5 +1,14 @@
 # Maida Action smoke fixture
 
+## Start with the released Maida gate
+
+```bash
+uv tool install "maida-ai==0.5.3"
+maida demo --regression
+```
+
+Expect a deliberate FAIL and PR-comment preview. First-time users should follow the [coding-agent walkthrough](https://maida.ai/docs/getting-started/) to capture one task, review a few checks, and prove pass/fail/repair. This repository is an additional integration or development surface; it is not required for that first gate. Runnable examples and demos live in [maida-tutorials](https://github.com/maida-ai/maida-tutorials).
+
 A synthetic, multi-step sales assistant for testing the Maida GitHub Action.
 This repository is a permanent test environment, safe to use for test branches,
 PRs and baseline changes. It has no production role.
@@ -129,6 +138,8 @@ Action installation, CLI invocation, report handling and GitHub check publicatio
 it does not test PR comments, trusted-base enforcement or protected merges.
 The released CLI stays pinned to keep these tests focused on Action changes.
 
+The SHA-pinned Action revision `a97b09ed6a8f90fd8f9bf5eab853f9754cf40151` still rejects decisive invariant-failure reports with `abort_reason=invariant_violation` before publishing the named check. The [live retry-loop run](https://github.com/maida-ai/maida-assert-smoke/actions/runs/36459986276) records that limitation with Maida 0.5.3. The measured-failure acceptance exercise uses `extra_research`; it does not establish invariant-failure publication. Keep the retry-loop scenario and publication assertions when reviewing an updated Action pin.
+
 The schedule becomes active when this workflow is on the default branch. Changes
 to the Action repository are picked up on the next scheduled run, not immediately.
 Use manual dispatch for an earlier check. Upstream tests request only contents
@@ -144,7 +155,7 @@ Intentional policy/baseline changes require a maintainer-controlled
 see the [Action documentation](https://github.com/maida-ai/maida-assert#readme).
 Never source that variable from candidate content.
 
-Repository settings must require both `Maida / agent-check` and `Maida statistical gate`, strict up-to-date checks, fresh reviews, and CODEOWNERS review of workflow/control changes. YAML alone does not configure protection. The explicit commit status binds ordinary PR and dispatch evaluations to the verified current PR head. Scheduled checks do not establish merge enforcement.
+For the combined PR/dispatch listener, require `Maida / agent-check` with strict up-to-date checks, fresh reviews, and CODEOWNERS review of workflow/control changes. Do not also require `Sales agent gate` or `Maida statistical gate`: GitHub can attach the named check to a suppressed bot-push workflow suite, leaving that requirement pending despite a successful dispatch evaluation. The explicit commit status requires a validated behavioral PASS, accepted configuration and successful named-check publication on the verified current PR head. YAML alone does not configure protection; scheduled checks do not establish merge enforcement.
 
 The default-branch `accept.yml` workflow handles `/maida accept <reason>` through separate authorization, read-only capture and trusted write jobs. It creates a baseline-only bot commit and requests a fresh `repository_dispatch` gate. The gate initially blocks the changed configuration until a maintainer reviews the baseline and sets `MAIDA_CONFIGURATION_ACCEPTANCE` to the exact base/head/digest reported in the run. Rerun that dispatch after setting the variable. A later commit invalidates acceptance; clear the stale variable before evaluating a different PR. No personal access token or repository secret is needed.
 
