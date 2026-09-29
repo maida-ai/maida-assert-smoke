@@ -21,7 +21,7 @@ jobs:
       head-sha: ${{ steps.command.outputs.head-sha }}
     steps:
       - id: command
-        uses: maida-ai/maida-assert/accept-command@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
+        uses: maida-ai/maida-assert/accept-command@8ba54c181ef26df9eaecd38bb46a107756297b28
         with:
           stage: authorize
           baseline: .maida/baselines/sales.json
@@ -40,7 +40,7 @@ jobs:
         with:
           ref: ${{ needs.authorize.outputs.head-sha }}
           persist-credentials: false
-      - uses: maida-ai/maida-assert/capture-acceptance@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
+      - uses: maida-ai/maida-assert/capture-acceptance@8ba54c181ef26df9eaecd38bb46a107756297b28
         with:
           context: ${{ needs.authorize.outputs.context }}
           agent-script: agent.py
@@ -65,7 +65,7 @@ jobs:
         with:
           name: maida-accept-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/maida-acceptance
-      - uses: maida-ai/maida-assert/write-back@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
+      - uses: maida-ai/maida-assert/write-back@8ba54c181ef26df9eaecd38bb46a107756297b28
         if: always()
         with:
           context: ${{ needs.authorize.outputs.context }}
