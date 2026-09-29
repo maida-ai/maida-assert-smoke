@@ -43,7 +43,7 @@ jobs:
       statuses: write
     steps:
       - id: pr
-        uses: maida-ai/maida-assert/pr-context@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
+        uses: maida-ai/maida-assert/pr-context@8ba54c181ef26df9eaecd38bb46a107756297b28
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ steps.pr.outputs.head-sha }}
@@ -51,20 +51,20 @@ jobs:
           persist-credentials: false
       # Reviewed Action code; blocking policy and baseline come from the PR base.
       - id: gate
-        uses: maida-ai/maida-assert@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
+        uses: maida-ai/maida-assert@8ba54c181ef26df9eaecd38bb46a107756297b28
         env:
           MAIDA_DATA_DIR: ${{ runner.temp }}/sales-gate-runs
         with:
           agent-script: agent.py
           baseline: .maida/baselines/sales.json
           policy: .maida/policy.yaml
-          maida-version: v0.5.3
+          maida-version: v0.6.0
           mode: blocking
           configuration-acceptance: ${{ vars.MAIDA_CONFIGURATION_ACCEPTANCE }}
           post-comment: 'true'
           accept-command-enabled: 'true'
       - if: always() && steps.pr.outcome == 'success'
-        uses: maida-ai/maida-assert/publish-status@a97b09ed6a8f90fd8f9bf5eab853f9754cf40151
+        uses: maida-ai/maida-assert/publish-status@8ba54c181ef26df9eaecd38bb46a107756297b28
         with:
           head-sha: ${{ steps.pr.outputs.head-sha }}
           base-sha: ${{ steps.pr.outputs.base-sha }}
@@ -156,7 +156,7 @@ jobs:
           agent-script: agent.py
           baseline: .maida/baselines/sales.json
           policy: ${{ matrix.scenario == 'inconclusive' && '.maida/inconclusive.yaml' || '.maida/policy.yaml' }}
-          maida-version: v0.5.3
+          maida-version: v0.6.0
           mode: report-only
           post-comment: 'false'
       - name: Verify expected verdict and fresh check publication

@@ -3,7 +3,7 @@
 ## Start with the released Maida gate
 
 ```bash
-uv tool install "maida-ai==0.5.3"
+uv tool install "maida-ai==0.6.0"
 maida demo --regression
 ```
 
@@ -118,11 +118,7 @@ missing required tool acceptable under unchanged policy.
 `verify.yml` runs tests, coverage and lint on every PR. `maida.yml` has two
 purposes:
 
-- **Consumer PR gate:** every PR, regardless of target branch, runs the reviewed,
-  SHA-pinned Action in blocking mode against the exact candidate commit. The
-  Action reads policy and baseline from the PR base. PASS succeeds; FAIL and
-  INCONCLUSIVE fail the gate. Missing evidence or failed check publication also
-  fails the job. The candidate's `scenario.json` selects the agent behavior.
+- **Consumer PR gate:** the workflow is configured to run the SHA-pinned Action in blocking mode against each PR's exact candidate commit, regardless of target branch. The Action is intended to read policy and baseline from the PR base, allow PASS, and fail the job for FAIL, INCONCLUSIVE, missing evidence, or failed check publication. The candidate's `scenario.json` selects the agent behavior. Verify these outcomes on a protected PR before claiming merge enforcement.
 - **Upstream Action regression smoke:** every Monday at 08:41 UTC, test current
   `maida-ai/maida-assert` main with `good`, `extra_research`, `retry_loop` and
   `inconclusive`. Manual dispatch tests any scenario listed above. Resolve main
@@ -138,7 +134,7 @@ Action installation, CLI invocation, report handling and GitHub check publicatio
 it does not test PR comments, trusted-base enforcement or protected merges.
 The released CLI stays pinned to keep these tests focused on Action changes.
 
-The SHA-pinned Action revision `a97b09ed6a8f90fd8f9bf5eab853f9754cf40151` still rejects decisive invariant-failure reports with `abort_reason=invariant_violation` before publishing the named check. The [live retry-loop run](https://github.com/maida-ai/maida-assert-smoke/actions/runs/36459986276) records that limitation with Maida 0.5.3. The measured-failure acceptance exercise uses `extra_research`; it does not establish invariant-failure publication. Keep the retry-loop scenario and publication assertions when reviewing an updated Action pin.
+The PR and acceptance workflows now pin the `v0.6.0` Action commit `8ba54c181ef26df9eaecd38bb46a107756297b28`, with Maida 0.6.0. A [historical retry-loop run](https://github.com/maida-ai/maida-assert-smoke/actions/runs/36459986276) exposed missing check publication on the previous Action revision. Keep that scenario and its publication assertions when verifying this pin on a protected PR. Local tests cannot establish the new revision's live check publication or merge behavior.
 
 The schedule becomes active when this workflow is on the default branch. Changes
 to the Action repository are picked up on the next scheduled run, not immediately.
